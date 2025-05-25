@@ -55,7 +55,12 @@ export class UserModel {
   @Generated('uuid')
   additionalId: string;
 
-  @OneToOne(() => ProfileModel, (profile) => profile.user)
+  @OneToOne(() => ProfileModel, (profile) => profile.user, {
+    eager: false,
+    cascade: true,
+    nullable: true,
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn()
   profile: ProfileModel;
 

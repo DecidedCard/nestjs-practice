@@ -9,10 +9,10 @@ import { PostsModel } from './posts/entities/posts.entity';
 
 import { UsersModule } from './users/users.module';
 import { UsersModel } from './users/entities/users.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    PostsModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -23,7 +23,9 @@ import { UsersModel } from './users/entities/users.entity';
       entities: [PostsModel, UsersModel],
       synchronize: true,
     }),
+    PostsModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -5,6 +5,12 @@ import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 
+interface PayLoad {
+  type: string;
+  sub: number;
+  email: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -75,6 +81,34 @@ export class AuthService {
     const password = split[1];
 
     return { email, password };
+  }
+  /**
+   * 토큰 검증
+   */
+  verifyToken(token: string): PayLoad {
+    return this.jwtService.verify(token, { secret: JWT_SECRET });
+  }
+
+  rotateToken(token: string, isRefreshToken: boolean) {
+    const decoded: PayLoad = this.jwtService.verify(token, {
+      secret: JWT_SECRET,
+    });
+
+    /**
+     * sub: id
+     * email: email
+     * type: 'access' | 'refresh'
+     */
+    if (decoded.type !== 'refresh') {
+      throw new UnauthorizedException(
+        '토큰 재발급은 Refresh 토큰으로만 가능합니다.',
+      );
+    }
+
+    return this.signToken(
+      { email: decoded.email, id: decoded.sub },
+      isRefreshToken,
+    );
   }
 
   /**
@@ -152,7 +186,7 @@ export class AuthService {
      * 1) 입력된 비밀번호
      * 2) 기존 해시(hash) -> 사용자 정보에 저장돼있는 hash
      */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
     const passOk = await bcrypt.compare(user.password, existingUser.password);
     if (!passOk) {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
@@ -170,12 +204,11 @@ export class AuthService {
   async registerWithEmail(
     user: Pick<UsersModel, 'nickname' | 'email' | 'password'>,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const hash = await bcrypt.hash(user.password, HASH_ROUNDS);
 
     const newUser = await this.usersService.createUser({
       ...user,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       password: hash,
     });
 

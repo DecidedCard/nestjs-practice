@@ -4,6 +4,7 @@ import { UsersModel } from 'src/users/entities/users.entity';
 import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 interface PayLoad {
   type: string;
@@ -84,7 +85,8 @@ export class AuthService {
   verifyToken(token: string): PayLoad {
     try {
       return this.jwtService.verify(token, { secret: JWT_SECRET });
-    } catch (error) {
+    } catch (e) {
+      console.log(e);
       throw new UnauthorizedException(
         '유효하지 않은 토큰입니다. 다시 로그인해주세요.',
       );
@@ -203,9 +205,7 @@ export class AuthService {
     return this.loginUser(existingUser);
   }
 
-  async registerWithEmail(
-    user: Pick<UsersModel, 'nickname' | 'email' | 'password'>,
-  ) {
+  async registerWithEmail(user: RegisterUserDto) {
     const hash = await bcrypt.hash(user.password, HASH_ROUNDS);
 
     const newUser = await this.usersService.createUser({

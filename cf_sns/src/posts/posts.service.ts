@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { PostsModel } from './entities/posts.entity';
 
-import { MoreThan, type Repository } from 'typeorm';
+import { FindOptionsWhere, LessThan, MoreThan, type Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { paginatePostDto } from './dto/paginate-post.dto';
@@ -32,8 +32,21 @@ export class PostsService {
 
   // 오름차 순으로 정렬하는 pagination만 구현한다.
   async paginatePosts(dto: paginatePostDto) {
+    const where: FindOptionsWhere<PostsModel> = {};
+
+    if (dto.where__id_less_than) {
+      /**
+       * {
+       *  id: LessThan(dto.where__id_less_than)
+       * }
+       */
+      where.id = LessThan(dto.where__id_less_than);
+    } else if (dto.where__id_more_than) {
+      where.id = MoreThan(dto.where__id_more_than);
+    }
+
     const posts = await this.postsRepository.find({
-      where: { id: MoreThan(dto.where__id_more_than ?? 0) },
+      where,
       order: { createdAt: dto.order__createdAt },
       take: dto.take,
     });
@@ -41,7 +54,10 @@ export class PostsService {
     // 해당되는 포스트가 0개 이상이면
     // 마지막 포스트를 가져오고
     // 아니면 null을 반환한다.
-    const lastItem = posts.length > 0 ? posts[posts.length - 1] : null;
+    const lastItem =
+      posts.length > 0 && posts.length === dto.take
+        ? posts[posts.length - 1]
+        : null;
 
     const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
 
@@ -55,16 +71,18 @@ export class PostsService {
        */
       for (const key of Object.keys(dto)) {
         if (dto[key]) {
-          if (key !== 'where__id_more_than') {
+          if (key !== 'where__id_more_than' && key !== 'where__id_less_than') {
             nextUrl.searchParams.append(key, String(dto[key]));
           }
         }
       }
 
-      nextUrl.searchParams.append(
-        'where__id_more_than',
-        lastItem.id.toString(),
-      );
+      const key =
+        dto.order__createdAt === 'ASC'
+          ? 'where__id_more_than'
+          : 'where__id_less_than';
+
+      nextUrl.searchParams.append(key, lastItem.id.toString());
     }
 
     /**
@@ -81,10 +99,10 @@ export class PostsService {
     return {
       data: posts,
       cursor: {
-        after: lastItem?.id,
+        after: lastItem?.id ?? null,
       },
       count: posts.length,
-      next: nextUrl?.toString(),
+      next: nextUrl?.toString() ?? null,
     };
   }
 

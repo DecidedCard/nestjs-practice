@@ -4,6 +4,10 @@ import { numberValidationMessage } from 'src/common/validation-message/number-va
 export class paginatePostDto {
   @IsNumber({}, { message: numberValidationMessage })
   @IsOptional()
+  page?: number;
+
+  @IsNumber({}, { message: numberValidationMessage })
+  @IsOptional()
   where__id_less_than?: number;
 
   // 이전 마지막 데이터의 ID

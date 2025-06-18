@@ -19,6 +19,16 @@ export class PostsService {
     return this.postsRepository.find({ relations: ['author'] });
   }
 
+  // 추후 삭제
+  async generatePosts(userId: number) {
+    for (let i = 0; i < 100; i++) {
+      await this.createPost(userId, {
+        title: `임의로 생성된 포스트 제목 ${i}`,
+        content: `임의로 생성된 포스트 내용 ${i}`,
+      });
+    }
+  }
+
   // 오름차 순으로 정렬하는 pagination만 구현한다.
   async paginatePosts(dto: paginatePostDto) {
     const posts = await this.postsRepository.find({

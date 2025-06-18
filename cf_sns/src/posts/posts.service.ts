@@ -7,6 +7,7 @@ import { MoreThan, type Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { paginatePostDto } from './dto/paginate-post.dto';
+import { HOST, PROTOCOL } from 'src/common/const/env.const';
 
 @Injectable()
 export class PostsService {
@@ -37,6 +38,35 @@ export class PostsService {
       take: dto.take,
     });
 
+    // 해당되는 포스트가 0개 이상이면
+    // 마지막 포스트를 가져오고
+    // 아니면 null을 반환한다.
+    const lastItem = posts.length > 0 ? posts[posts.length - 1] : null;
+
+    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
+
+    if (nextUrl) {
+      /**
+       * dto의 키값들을 루핑하면서
+       * 키값에 해당되는 밸류가 존재하면
+       * param에 그대로 붙여넣는다.
+       *
+       * 단, where__id_more_than 값만 lastItem의 마지막 값으로 넣어준다.
+       */
+      for (const key of Object.keys(dto)) {
+        if (dto[key]) {
+          if (key !== 'where__id_more_than') {
+            nextUrl.searchParams.append(key, String(dto[key]));
+          }
+        }
+      }
+
+      nextUrl.searchParams.append(
+        'where__id_more_than',
+        lastItem.id.toString(),
+      );
+    }
+
     /**
      * Response
      *
@@ -50,6 +80,11 @@ export class PostsService {
 
     return {
       data: posts,
+      cursor: {
+        after: lastItem?.id,
+      },
+      count: posts.length,
+      next: nextUrl?.toString(),
     };
   }
 

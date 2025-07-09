@@ -20,10 +20,21 @@ import {
   ENV_DB_PORT_KEY,
   ENV_DB_USERNAME_KEY,
 } from './common/const/env-leys.const';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { PUBLIC_FOLDER_PATH } from './common/const/path.const';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
+    //4022.jpg
+    //http://localhost:3000/public/posts/4022.jpg x
+    //http://localhost:3000/posts/4022.jpg
+    ServeStaticModule.forRoot({
+      rootPath: PUBLIC_FOLDER_PATH,
+      // serveRoot 추가 시
+      //http://localhost:3000/public/posts/4022.jpg 이 형식으로 할 수 있음
+      serveRoot: '/public',
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env[ENV_DB_HOST_KEY],

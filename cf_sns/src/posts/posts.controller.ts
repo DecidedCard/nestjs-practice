@@ -45,6 +45,18 @@ export class PostsController {
   }
 
   // DTO - Data Transfer Object
+  // A Model, B Model
+  // Post API -> A 모델을 저장하고, B 모델을 저장한다.
+  // await repository.save(a);
+  // await repository.save(b);
+
+  // 만약에 a를 저장하다가 실패하면 b를 저장하면 안될경우
+  // all or nothing
+  //
+  // transaction
+  // start -> 시작
+  // commit -> 저장
+  // rollback -> 원상복구
   @Post()
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('image'))

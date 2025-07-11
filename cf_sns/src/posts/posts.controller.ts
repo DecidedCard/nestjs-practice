@@ -22,7 +22,6 @@ import { UsersModel } from 'src/users/entities/users.entity';
 import { ImageModelType } from 'src/common/entity/image.entity';
 import { QueryRunner as QR } from 'typeorm';
 import { PostsImagesService } from './image/images.service';
-import { LogInterceptor } from 'src/common/interceptor/log.interceptor';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
 import { QueryRunner } from 'src/common/decorator/query-runner.decorator';
 import { HttpExceptionFilter } from 'src/common/exception-filter/http.exception-filter';
@@ -35,7 +34,7 @@ export class PostsController {
   ) {}
 
   @Get()
-  @UseInterceptors(LogInterceptor)
+  // @UseInterceptors(LogInterceptor)
   @UseFilters(HttpExceptionFilter)
   getPosts(@Query() query: paginatePostDto) {
     return this.postsService.paginatePosts(query);

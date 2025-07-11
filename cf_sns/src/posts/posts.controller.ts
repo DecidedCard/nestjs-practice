@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Param,
   ParseIntPipe,
   Patch,
@@ -21,12 +22,14 @@ import { UsersModel } from 'src/users/entities/users.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageModelType } from 'src/common/entity/image.entity';
 import { DataSource } from 'typeorm';
+import { PostsImagesService } from './image/images.service';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly dataSource: DataSource,
+    private readonly postsImageService: PostsImagesService,
   ) {}
 
   @Get()
@@ -84,15 +87,18 @@ export class PostsController {
 
     // 로직 실행
     try {
-      const post = await this.postsService.createPost(id, body);
+      const post = await this.postsService.createPost(id, body, qr);
 
       for (let i = 0; i < body.images.length; i++) {
-        await this.postsService.createPostImage({
-          post,
-          order: i,
-          path: body.images[i],
-          type: ImageModelType.POST_IMAGE,
-        });
+        await this.postsImageService.createPostImage(
+          {
+            post,
+            order: i,
+            path: body.images[i],
+            type: ImageModelType.POST_IMAGE,
+          },
+          qr,
+        );
       }
 
       await qr.commitTransaction();
@@ -105,6 +111,8 @@ export class PostsController {
       // 트랜잭션을 종료하고 원래 상태로 되돌린다.
       await qr.rollbackTransaction();
       await qr.release();
+
+      throw new InternalServerErrorException(e);
     }
   }
 

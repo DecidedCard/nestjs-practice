@@ -5,10 +5,12 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatsService } from './chats.service';
+import { EnterChatDto } from './dto/enter-chat.dto';
 
 @WebSocketGateway({
   namespace: 'chats',
@@ -25,17 +27,27 @@ export class ChatsGateway implements OnGatewayConnection {
   @SubscribeMessage('create_chat')
   async createChat(
     @MessageBody() data: CreateChatDto,
-    @ConnectedSocket() socket: Socket,
+    // @ConnectedSocket() socket: Socket,
   ) {
-    const chat = await this.chatsService.createChat(data);
+    await this.chatsService.createChat(data);
   }
 
   @SubscribeMessage('enter_chat')
-  enterChat(@MessageBody() data: number[], @ConnectedSocket() socket: Socket) {
-    for (const chatId of data) {
-      // socket.join()
-      socket.join(chatId.toString());
+  async enterChat(
+    @MessageBody() data: EnterChatDto,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    for (const chatId of data.chatIds) {
+      const exists = await this.chatsService.checkIfChatExists(chatId);
+
+      if (!exists) {
+        throw new WsException({
+          code: 100,
+          message: `존재하지 않는 chat 입니다. chatId: ${chatId}`,
+        });
+      }
     }
+    await socket.join(data.chatIds.map((x) => x.toString()));
   }
 
   // socket.on('send_message', (message) => {console.log(message)})

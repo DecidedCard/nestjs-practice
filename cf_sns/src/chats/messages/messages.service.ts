@@ -14,10 +14,10 @@ export class ChatsMessagesService {
     private readonly commonService: CommonService,
   ) {}
 
-  async createMessage(dto: CreateMessagesDto) {
+  async createMessage(dto: CreateMessagesDto, authorId: number) {
     const message = await this.messagesRepository.save({
       chat: { id: dto.chatId },
-      author: { id: dto.authorId },
+      author: { id: authorId },
       message: dto.message,
     });
 

@@ -22,6 +22,8 @@ import {
 import { SocketCatchHttpExceptionFilter } from 'src/common/exception-filter/socket-catch-http.exception-filter';
 import { SocketBearerTokenGuard } from 'src/auth/guard/socket/socket-bearer-token.guard';
 import { UsersModel } from 'src/users/entities/users.entity';
+import { UsersService } from 'src/users/users.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @WebSocketGateway({
   namespace: 'chats',
@@ -30,14 +32,44 @@ export class ChatsGateway implements OnGatewayConnection {
   constructor(
     private readonly chatsService: ChatsService,
     private readonly messagesService: ChatsMessagesService,
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
   ) {}
   @WebSocketServer()
   server: Server;
 
-  handleConnection(socket: Socket) {
+  async handleConnection(socket: Socket & { user: UsersModel }) {
     console.log(`on connect called : ${socket.id}`);
+
+    const headers = socket.handshake.headers;
+
+    // Bearer xxxxxx
+    const rawToken = headers['authorization'] as string;
+
+    if (!rawToken) {
+      // throw new WsException('토큰이 없습니다.');
+      socket.disconnect();
+    }
+
+    try {
+      const token = this.authService.extractTokenFromHeader(rawToken, true);
+
+      const payload = this.authService.verifyToken(token);
+      const user = (await this.usersService.getUserByEmail(
+        payload.email,
+      )) as UsersModel;
+
+      socket.user = user;
+
+      return true;
+    } catch (e) {
+      console.error('Socket token guard error', e);
+      // throw new WsException('토큰이 유효하지 않습니다.');
+      socket.disconnect();
+    }
   }
 
+  @SubscribeMessage('create_chat')
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -47,8 +79,6 @@ export class ChatsGateway implements OnGatewayConnection {
     }),
   )
   @UseFilters(SocketCatchHttpExceptionFilter)
-  @UseGuards(SocketBearerTokenGuard)
-  @SubscribeMessage('create_chat')
   async createChat(
     @MessageBody() data: CreateChatDto,
     @ConnectedSocket() socket: Socket & { user: UsersModel },
@@ -56,6 +86,7 @@ export class ChatsGateway implements OnGatewayConnection {
     await this.chatsService.createChat(data);
   }
 
+  @SubscribeMessage('enter_chat')
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -65,8 +96,6 @@ export class ChatsGateway implements OnGatewayConnection {
     }),
   )
   @UseFilters(SocketCatchHttpExceptionFilter)
-  @UseGuards(SocketBearerTokenGuard)
-  @SubscribeMessage('enter_chat')
   async enterChat(
     @MessageBody() data: EnterChatDto,
     @ConnectedSocket() socket: Socket,
@@ -85,6 +114,7 @@ export class ChatsGateway implements OnGatewayConnection {
   }
 
   // socket.on('send_message', (message) => {console.log(message)})
+  @SubscribeMessage('send_message')
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -94,8 +124,6 @@ export class ChatsGateway implements OnGatewayConnection {
     }),
   )
   @UseFilters(SocketCatchHttpExceptionFilter)
-  @UseGuards(SocketBearerTokenGuard)
-  @SubscribeMessage('send_message')
   async sendMessage(
     @MessageBody() dto: CreateMessagesDto,
     @ConnectedSocket() socket: Socket & { user: UsersModel },

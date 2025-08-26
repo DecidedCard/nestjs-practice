@@ -2,6 +2,8 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -28,7 +30,9 @@ import { AuthService } from 'src/auth/auth.service';
 @WebSocketGateway({
   namespace: 'chats',
 })
-export class ChatsGateway implements OnGatewayConnection {
+export class ChatsGateway
+  implements OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect
+{
   constructor(
     private readonly chatsService: ChatsService,
     private readonly messagesService: ChatsMessagesService,
@@ -67,6 +71,14 @@ export class ChatsGateway implements OnGatewayConnection {
       // throw new WsException('토큰이 유효하지 않습니다.');
       socket.disconnect();
     }
+  }
+
+  afterInit(server: any) {
+    console.log('after gateway init');
+  }
+
+  handleDisconnect(socket: Socket) {
+    console.log(`on disconnect called: ${socket.id}`);
   }
 
   @SubscribeMessage('create_chat')

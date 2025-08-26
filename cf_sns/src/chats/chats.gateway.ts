@@ -15,14 +15,8 @@ import { ChatsService } from './chats.service';
 import { EnterChatDto } from './dto/enter-chat.dto';
 import { CreateMessagesDto } from './messages/dto/create-messages.dto';
 import { ChatsMessagesService } from './messages/messages.service';
-import {
-  UseFilters,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { SocketCatchHttpExceptionFilter } from 'src/common/exception-filter/socket-catch-http.exception-filter';
-import { SocketBearerTokenGuard } from 'src/auth/guard/socket/socket-bearer-token.guard';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from 'src/auth/auth.service';
@@ -73,7 +67,7 @@ export class ChatsGateway
     }
   }
 
-  afterInit(server: any) {
+  afterInit() {
     console.log('after gateway init');
   }
 
@@ -93,7 +87,7 @@ export class ChatsGateway
   @UseFilters(SocketCatchHttpExceptionFilter)
   async createChat(
     @MessageBody() data: CreateChatDto,
-    @ConnectedSocket() socket: Socket & { user: UsersModel },
+    // @ConnectedSocket() socket: Socket & { user: UsersModel },
   ) {
     await this.chatsService.createChat(data);
   }

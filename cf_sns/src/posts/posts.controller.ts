@@ -9,11 +9,9 @@ import {
   Post,
   Query,
   UseFilters,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
 import { User } from 'src/users/decorator/user.decorator';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -27,6 +25,7 @@ import { QueryRunner } from 'src/common/decorator/query-runner.decorator';
 import { HttpExceptionFilter } from 'src/common/exception-filter/http.exception-filter';
 import { Roles } from 'src/users/decorator/roles.decorator';
 import { RolesEnum } from 'src/users/const/roles.const';
+import { IsPublic } from 'src/common/decorator/is-public.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -36,6 +35,7 @@ export class PostsController {
   ) {}
 
   @Get()
+  @IsPublic()
   // @UseInterceptors(LogInterceptor)
   @UseFilters(HttpExceptionFilter)
   getPosts(@Query() query: paginatePostDto) {
@@ -43,6 +43,7 @@ export class PostsController {
   }
 
   @Get(':id')
+  @IsPublic()
   getPost(@Param('id', ParseIntPipe) id: number) {
     return this.postsService.getPostById(id);
   }
@@ -50,7 +51,6 @@ export class PostsController {
   // 추후 삭제
   // POST /posts/random
   @Post('random')
-  @UseGuards(AccessTokenGuard)
   async postPostsRandom(@User() user: UsersModel) {
     await this.postsService.generatePosts(user.id);
 
@@ -71,7 +71,6 @@ export class PostsController {
   // commit -> 저장
   // rollback -> 원상복구
   @Post()
-  @UseGuards(AccessTokenGuard)
   @UseInterceptors(TransactionInterceptor)
   async postPosts(
     @User('id') id: number,
@@ -108,7 +107,6 @@ export class PostsController {
   }
 
   @Delete(':id')
-  @UseGuards(AccessTokenGuard)
   @Roles(RolesEnum.ADMIN)
   deletePost(@Param('id', ParseIntPipe) id: number) {
     return this.postsService.deletePost(id);

@@ -4,18 +4,18 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { paginateCommentDto } from './dto/paginate-comment.dto';
 import { AccessTokenGuard } from 'src/auth/guard/bearer-token.guard';
-import { TransactionInterceptor } from 'src/common/interceptor/transaction.interceptor';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { User } from 'src/users/decorator/user.decorator';
 import { UsersModel } from 'src/users/entity/users.entity';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
@@ -60,5 +60,14 @@ export class CommentsController {
     @Body() body: CreateCommentDto,
   ) {
     return this.commentsService.createComment(user, postId, body);
+  }
+
+  @Patch(':commentId')
+  @UseGuards(AccessTokenGuard)
+  async patchComment(
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Body() body: UpdateCommentDto,
+  ) {
+    return this.commentsService.updateComment(body, commentId);
   }
 }

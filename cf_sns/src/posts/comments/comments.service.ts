@@ -6,6 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CommonService } from 'src/common/common.service';
 import { UsersModel } from 'src/users/entity/users.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { DEFAULT_COMMENT_FIND_OPTIONS } from './const/default-comment-find-options.const';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentsService {
@@ -20,8 +22,8 @@ export class CommentsService {
       dto,
       this.commentsRepository,
       {
+        ...DEFAULT_COMMENT_FIND_OPTIONS,
         where: { post: { id: postId } },
-        relations: { author: true },
       },
       `posts/${postId}/comments`,
     );
@@ -29,6 +31,7 @@ export class CommentsService {
 
   async getCommentById(id: number) {
     const comment = await this.commentsRepository.findOne({
+      ...DEFAULT_COMMENT_FIND_OPTIONS,
       where: { id },
     });
 
@@ -49,5 +52,16 @@ export class CommentsService {
       post: { id: postId },
       author,
     });
+  }
+
+  async updateComment(dto: UpdateCommentDto, commentId: number) {
+    const prevComment = (await this.commentsRepository.preload({
+      id: commentId,
+      ...dto,
+    })) as CommentsModel;
+
+    const newComment = await this.commentsRepository.save(prevComment);
+
+    return newComment;
   }
 }

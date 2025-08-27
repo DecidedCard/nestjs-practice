@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { PostsModel } from './entities/posts.entity';
+import { PostsModel } from './entity/posts.entity';
 
 import {
   FindOptionsWhere,

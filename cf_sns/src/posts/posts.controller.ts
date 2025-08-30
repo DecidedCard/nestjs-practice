@@ -27,7 +27,7 @@ import { HttpExceptionFilter } from 'src/common/exception-filter/http.exception-
 import { Roles } from 'src/users/decorator/roles.decorator';
 import { RolesEnum } from 'src/users/const/roles.const';
 import { IsPublic } from 'src/common/decorator/is-public.decorator';
-import { IsPostMineOrAdmin } from './guard/is-post-mine-or-admin.guard';
+import { IsPostMineOrAdminGuard } from './guard/is-post-mine-or-admin.guard';
 
 @Controller('posts')
 export class PostsController {
@@ -99,7 +99,7 @@ export class PostsController {
   }
 
   @Patch(':postId')
-  @UseGuards(IsPostMineOrAdmin)
+  @UseGuards(IsPostMineOrAdminGuard)
   patchPost(
     @Param('postId', ParseIntPipe) id: number,
     @Body() body: UpdatePostDto,

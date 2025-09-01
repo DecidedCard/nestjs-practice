@@ -2,12 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel } from './entity/users.entity';
 import { Repository } from 'typeorm';
+import { UserFollowersModel } from './entity/user-followers.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersModel)
     private readonly userRepository: Repository<UsersModel>,
+    @InjectRepository(UserFollowersModel)
+    private readonly userFollowersRepository: Repository<UserFollowersModel>,
   ) {}
 
   async getAllUsers() {
@@ -52,31 +55,42 @@ export class UsersService {
   }
 
   async followUser(followerId: number, followeeId: number) {
-    const user = await this.userRepository.findOne({
-      where: { id: followerId },
-      relations: { followees: true },
+    await this.userFollowersRepository.save({
+      follower: {
+        id: followerId,
+      },
+      followee: {
+        id: followeeId,
+      },
     });
 
-    if (!user) {
-      throw new BadRequestException('존재하지 않는 팔로워 입니다.');
-    }
-
-    await this.userRepository.save({
-      ...user,
-      followees: [...user.followees, { id: followeeId }],
-    });
+    return true;
   }
 
   async getFollowers(userId: number): Promise<UsersModel[]> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: { followers: true },
+    /**
+     * [
+     * {
+     *    id: number,
+     *    follower: UsersModel;
+     *    followee: UsersModel;
+     *    isConfirmed: boolean;
+     *    createdAt: Date;
+     *    updatedAt: Date:
+     * }
+     * ]
+     */
+    const result = await this.userFollowersRepository.find({
+      where: {
+        followee: { id: userId },
+      },
+      relations: { follower: true, followee: true },
     });
 
-    if (!user) {
-      throw new BadRequestException('존재하지 않는 유저입니다.');
+    if (!result) {
+      throw new BadRequestException('존재하지 않는 팔로워입니다.');
     }
 
-    return user.followers;
+    return result.map((x) => x.follower);
   }
 }

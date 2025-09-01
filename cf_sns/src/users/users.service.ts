@@ -50,4 +50,33 @@ export class UsersService {
   async getUserByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
   }
+
+  async followUser(followerId: number, followeeId: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: followerId },
+      relations: { followees: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('존재하지 않는 팔로워 입니다.');
+    }
+
+    await this.userRepository.save({
+      ...user,
+      followees: [...user.followees, { id: followeeId }],
+    });
+  }
+
+  async getFollowers(userId: number): Promise<UsersModel[]> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: { followers: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('존재하지 않는 유저입니다.');
+    }
+
+    return user.followers;
+  }
 }

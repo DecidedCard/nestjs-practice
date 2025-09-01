@@ -1,6 +1,7 @@
 import {
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   Param,
   ParseBoolPipe,
@@ -31,6 +32,15 @@ export class UsersController {
     return this.usersService.getAllUsers();
   }
 
+  // @Post()
+  // postUser(
+  //   @Body('nickname') nickname: string,
+  //   @Body('email') email: string,
+  //   @Body('password') password: string,
+  // ) {
+  //   return this.usersService.createUser({ nickname, email, password });
+  // }
+
   @Get('follow/me')
   async getFollow(
     @User() user: UsersModel,
@@ -58,12 +68,13 @@ export class UsersController {
     return this.usersService.confirmFollow(followerId, user.id);
   }
 
-  // @Post()
-  // postUser(
-  //   @Body('nickname') nickname: string,
-  //   @Body('email') email: string,
-  //   @Body('password') password: string,
-  // ) {
-  //   return this.usersService.createUser({ nickname, email, password });
-  // }
+  @Delete('follow/:id')
+  async deleteFollow(
+    @User() user: UsersModel,
+    @Param('id', ParseIntPipe) followeeId: number,
+  ) {
+    await this.usersService.deleteFollow(user.id, followeeId);
+
+    return true;
+  }
 }

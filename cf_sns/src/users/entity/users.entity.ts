@@ -58,4 +58,13 @@ export class UsersModel extends BaseModel {
 
   @OneToMany(() => CommentsModel, (comments) => comments.author)
   comments: CommentsModel[];
+
+  // 내가 팔로우 하고 있는 사람들
+  @ManyToMany(() => UsersModel, (user) => user.followees)
+  @JoinTable()
+  followers: UsersModel[];
+
+  // 나를 팔로우 하고 있는 사람들
+  @ManyToMany(() => UsersModel, (user) => user.followers)
+  followees: UsersModel[];
 }
